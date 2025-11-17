@@ -1,0 +1,39 @@
+name: Plot Gas
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 12 * * *"  # runs every day at 12:00 UTC
+  workflow_dispatch:       # also allows manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v5
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Run scripts
+      run: |
+        uv python install
+        uv run a.py   # get the readings
+        uv run b.py   # generate the plot
+        mv gas_readings_plot.png web/
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: 'web'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
