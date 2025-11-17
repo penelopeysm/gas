@@ -25,6 +25,8 @@ jobs:
         uv run a.py   # get the readings
         uv run b.py   # generate the plot
         mv gas_readings_plot.png web/
+      env:
+        DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
