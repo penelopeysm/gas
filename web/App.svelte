@@ -101,9 +101,11 @@
             <div>
                 <h1>Daily usage / cost</h1>
                 <p>
-                    Note that costs are only estimated; there are weird oddities
-                    to do with conversion from m³ to kWh and also tariff
-                    changes.
+                    Each 'day' actually runs from 6 a.m. to 6 a.m. the next day
+                    (this is to avoid inconsistencies based on my sleeping
+                    time). Note that costs are only estimated; there are weird
+                    oddities to do with conversion from m³ to kWh and also
+                    tariff changes.
                 </p>
                 <Usage {start_date_datetime} {end_date_datetime} />
             </div>
