@@ -27,11 +27,20 @@ jobs:
     - name: Run scripts
       run: |
         uv python install
-        uv run a.py   # get the readings
-        uv run b.py   # generate the plot
-        mv gas_readings_plot.png web/
+        uv run get_readings.py
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+
+    - name: Set up pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10
+
+    - name: Build website
+      working-directory: ./web
+      run: |
+        pnpm install
+        pnpm build --base /gas
 
     - name: Setup Pages
       uses: actions/configure-pages@v5

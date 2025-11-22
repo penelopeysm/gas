@@ -2,11 +2,14 @@ import discord
 import warnings
 import os
 import json
+from pathlib import Path
 
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
 
 GAS_CHAN_ID = 1350936583557087262
+
+OUTPUT_FILE = Path(__file__).parent / "web" / "readings.json"
 
 @client.event
 async def on_ready():
@@ -23,9 +26,9 @@ async def on_ready():
             })
         except ValueError:
             warnings.warn(f"Could not parse gas meter reading from message: `{message.content}`")
-    with open("gas_readings.json", "w") as f:
+    with open(OUTPUT_FILE, "w") as f:
         json.dump(readings, f, indent=4)
-    print(f"Saved {len(readings)} gas meter readings to gas_readings.json")
+    print(f"Saved {len(readings)} gas meter readings to {OUTPUT_FILE}")
     await client.close()
 
 client.run(os.environ["DISCORD_TOKEN"])
