@@ -22,6 +22,7 @@
     function make_data(start: DateTime, end: DateTime) {
         let usage = new Map<DateTime, number>();
         let temps = new Map<DateTime, number>();
+        // NOTE: This assumes that usagejson's entries are in ascending date order
         for (const entry of usageJson) {
             const date = DateTime.fromISO(entry.date);
             if (date < start || date > end) {
@@ -36,15 +37,20 @@
                 );
             }
         }
-        for (const entry of tempsJson) {
-            const date = DateTime.fromISO(entry.date);
-            if (date < start || date > end) {
-                continue;
+        console.log("usage", usage);
+        // Because m.values() for some Map m returns values in insertion order,
+        // we have to make sure that `temps` and `usage` have the same keys in
+        // the same order.
+        for (const date of usage.keys()) {
+            const tempEntry = tempsJson.find(
+                (t) => DateTime.fromISO(t.date).toMillis() == date.toMillis(),
+            );
+            if (tempEntry) {
+                temps.set(date, tempEntry.temperature);
+            } else {
+                temps.set(date, NaN);
             }
-            temps.set(date, entry.temperature);
         }
-        console.log(usage);
-        console.log(temps);
         return [usage, temps];
     }
 
@@ -67,6 +73,7 @@
             chart.data.datasets[0].data = Array.from(usage.values());
             chart.data.datasets[0].label = yLabel1;
             chart.data.datasets[1].data = Array.from(temps.values());
+            console.log(chart.data.datasets);
             chart.options.scales.A.title.text = yLabel1;
             chart.options.scales.A.ticks = isUsageView
                 ? {}
@@ -128,6 +135,7 @@
                                 size: 16,
                             },
                         },
+                        min: 0,
                         ticks: isUsageView
                             ? {}
                             : {
