@@ -30,6 +30,8 @@ jobs:
         uv run get_readings.py
       env:
         DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        LAT: ${{ secrets.LAT }}
+        LONG: ${{ secrets.LONG }}
 
     - name: Set up pnpm
       uses: pnpm/action-setup@v4
