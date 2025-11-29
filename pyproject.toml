@@ -8,4 +8,5 @@ dependencies = [
     "black>=25.11.0",
     "discord-py>=2.6.4",
     "numpy>=2.3.5",
+    "requests>=2.32.5",
 ]

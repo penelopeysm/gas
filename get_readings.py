@@ -2,9 +2,10 @@ import discord
 import warnings
 import os
 import json
+import requests
 import numpy as np
 from pathlib import Path
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, date, time
 from dataclasses import dataclass
 
 intents = discord.Intents.all()
@@ -14,6 +15,8 @@ GAS_CHAN_ID = 1350936583557087262
 WEB_DATA_DIR = Path(__file__).parent / "web" / "data"
 CUMULATIVE_OUTPUT_FILE = WEB_DATA_DIR / "readings.json"
 DAILY_USAGE_OUTPUT_FILE = WEB_DATA_DIR / "daily_usage.json"
+DAILY_TEMPERATURE_OUTPUT_FILE = WEB_DATA_DIR / "daily_temperature.json"
+
 
 @dataclass
 class GasMeterReading:
@@ -32,6 +35,7 @@ class GasMeterReading:
     def to_unix_tuple(self):
         return (int(self.datetime.timestamp()), self.reading)
 
+
 @dataclass
 class DailyGasUsage:
     date: datetime
@@ -42,6 +46,19 @@ class DailyGasUsage:
             "date": self.date.isoformat(),
             "usage": self.usage,
         }
+
+
+@dataclass
+class DailyTemperature:
+    date: datetime
+    temperature: float
+
+    def to_json_dict(self):
+        return {
+            "date": self.date.isoformat(),
+            "temperature": self.temperature,
+        }
+
 
 @client.event
 async def on_ready():
@@ -105,3 +122,45 @@ async def on_ready():
 
 
 client.run(os.environ["DISCORD_TOKEN"])
+
+
+URL = f"https://api.open-meteo.com/v1/forecast"
+PARAMS = {
+    "latitude": os.environ["LAT"],
+    "longitude": os.environ["LONG"],
+    "hourly": "temperature_2m",
+    # before this date there are Nones, which mess things up
+    "start_date": "2025-09-12",
+    "end_date": date.today().strftime("%Y-%m-%d"),
+    "timezone": "Europe/London",
+}
+
+response = requests.get(URL, params=PARAMS)
+data = response.json()
+
+times = data["hourly"]["time"]
+temperatures = data["hourly"]["temperature_2m"]
+
+# calculate daily average temperatures
+daily_temps = {}
+for time_str, temp in zip(times, temperatures):
+    day, time = time_str.split("T")
+    day = date.fromisoformat(day)
+    # start counting from 6am to 5am next day
+    hour = int(time.split(":")[0])
+    if hour >= 6:
+        day_key = day
+    else:
+        day_key = day - timedelta(days=1)
+    if day_key not in daily_temps:
+        daily_temps[day_key] = []
+    daily_temps[day_key].append(temp)
+temps = [
+    DailyTemperature(day, sum(hourly_temps) / len(hourly_temps))
+    for day, hourly_temps in daily_temps.items()
+]
+temps = [dt.to_json_dict() for dt in temps]
+
+with open(DAILY_TEMPERATURE_OUTPUT_FILE, "w") as f:
+    json.dump(temps, f, indent=4)
+print(f"Wrote daily temperatures to {DAILY_TEMPERATURE_OUTPUT_FILE}")
