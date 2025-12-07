@@ -129,8 +129,9 @@ PARAMS = {
     "latitude": os.environ["LAT"],
     "longitude": os.environ["LONG"],
     "hourly": "temperature_2m",
-    # before this date there are Nones, which mess things up
-    "start_date": "2025-09-12",
+    # 2 months before end date -- if we try to go too early,
+    # the API starts to return Nones which is annoying to filter out
+    "start_date": (date.today() - timedelta(days=60)).strftime("%Y-%m-%d"),
     "end_date": date.today().strftime("%Y-%m-%d"),
     "timezone": "Europe/London",
 }
